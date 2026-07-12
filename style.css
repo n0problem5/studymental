@@ -149,14 +149,48 @@ body {
 }
 
 /* ポップアップメニュー */
-.menu-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0, 0, 0, 0.4); display: flex; justify-content: center; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 1000; }
-.menu-overlay.active { opacity: 1; pointer-events: auto; }
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.98); /* 背景 */
+    
+    /* 👇 ここを追加！中身がはみ出したら縦スクロールできるようにします */
+    overflow-y: auto; 
+    
+    /* 👇 もし display: flex; が入っていたら、以下のように上詰めに変更すると確実です */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* center から flex-start に変更 */
+    padding-top: 60px; /* 上部に少し余白を作る */
+    padding-bottom: 60px; /* 下のキャンセルボタンの後ろにも余白を作る */
+    
+    box-sizing: border-box;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.menu-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
 .action-sheet { width: 100%; max-width: 380px; background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 14px 14px 0 0; padding: 10px 20px 30px 20px; box-sizing: border-box; transform: translateY(100%); transition: transform 0.3s ease; }
 .menu-overlay.active .action-sheet { transform: translateY(0); }
 .menu-title { font-size: 13px; color: #8e8e93; padding: 15px; text-align: center; border-bottom: 1px solid #d1d1d6; }
 .action-item { width: 100%; background: none; border: none; padding: 15px; font-size: 18px; color: #007fffff; text-align: center; cursor: pointer; border-bottom: 1px solid #d1d1d6; display: flex; justify-content: center; align-items: center; gap: 10px; }
 .action-item:last-child { border-bottom: none; }
 .action-item.cancel { color: #ff3b30; font-weight: bold; margin-top: 10px; }
+/* メニュー内にあるボタンの間隔を少し狭くする（例） */
+.menu-overlay button {
+    margin: 10px 0; /* 上下の隙間を少し狭める */
+    width: 80%;    /* スマホで押しやすい横幅に */
+    max-width: 300px;
+}
 
 /* ==========================================
    追加：コメント機能用のデザイン
