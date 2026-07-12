@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>study&mental 記録アプリ</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- グラフを描くためのライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- 0. ログイン / アカウント作成画面 -->
+    <div class="app-container" id="auth-screen">
+        <header class="app-header">
+            <h1>study&mental</h1>
+            <h2>ログイン</h2>
+        </header>
+        <main class="auth-form">
+            <div class="form-group">
+                <input type="text" id="auth-username" placeholder="ニックネーム（新規登録時のみ）">
+            </div>
+            <div class="form-group">
+                <input type="email" id="auth-email" placeholder="登録用ID（例：study@study.com）">
+            </div>
+            <div class="form-group">
+                <input type="password" id="auth-password" placeholder="パスワード">
+            </div>
+            <button class="menu-button" id="login-btn">ログイン</button>
+            <button class="menu-button secondary-btn" id="signup-btn">新規アカウント作成</button>
+        </main>
+    </div>
+
+    <!-- 1. トップ画面 -->
+    <div class="app-container hidden" id="top-screen">
+        <header class="app-header">
+            <h1>study&mental</h1>
+            <h2 id="user-display-name">記録アプリ</h2>
+            <button id="logout-btn" class="logout-link">ログアウトする</button>
+            <div id="teacher-comment-display" style="margin: 15px 0; padding: 12px; background: #fffde7; border-radius: 8px; border-left: 5px solid #fbc02d; font-size: 14px; color: #333;">📬 先生からのメッセージを待っています...</div>
+        </header>
+
+        <main class="button-area">
+            <button class="menu-button" id="record-button">時間を記録する</button>
+            <button class="menu-button" id="view-table-button">表で見る</button>
+        </main>
+
+        <footer class="app-footer">
+            <button class="comment-button" disabled>コメントをもらう</button>
+        </footer>
+    </div>
+
+    <!-- 2. 詳細な記録入力画面 -->
+    <div class="app-container hidden" id="record-screen">
+        <header class="screen-header">
+            <h2>学習記録入力</h2>
+        </header>
+        
+        <main class="record-form">
+            <section class="form-group">
+                <div class="input-inline">
+                    <input type="text" id="subject-input" placeholder="教科を入力">
+                    <div class="crud-buttons">
+                        <button id="add-subject-btn" class="pink-btn">追加</button>
+                    </div>
+                </div>
+                <label class="section-title">教科</label>
+                <select id="subject-select" class="ios-picker">
+                    <option value="">教科を選択</option>
+                </select>
+            </section>
+
+            <section class="form-group">
+                <label class="section-title text-green">日付</label>
+                <div class="datetime-picker-row">
+                    <input type="date" id="date-picker">
+                    <input type="time" id="time-picker">
+                </div>
+            </section>
+
+            <section class="form-group">
+                <label class="section-title text-yellow">勉強時間</label>
+                <div class="duration-picker">
+                    <input type="number" id="hours-input" value="0" min="0"> <span>hours</span>
+                    <input type="number" id="minutes-input" value="1" min="0" max="59"> <span>min</span>
+                </div>
+            </section>
+
+            <section class="form-group">
+                <label class="section-title">感情</label>
+                <div class="emotion-container">
+                    <button class="emotion-btn" data-emotion="angry">😡</button>
+                    <button class="emotion-btn" data-emotion="sad">😟</button>
+                    <button class="emotion-btn" data-emotion="good">🙂</button>
+                    <button class="emotion-btn" data-emotion="happy">😊</button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="form-footer">
+            <button id="back-to-top-from-record" class="blue-btn">⬅ 戻る</button>
+            <button id="save-record-btn" class="disabled-btn" disabled>記録</button>
+        </footer>
+    </div>
+
+    <!-- 3. 表で見る画面 -->
+    <div class="app-container hidden" id="table-screen">
+        <header class="screen-header">
+            <h2>学習履歴</h2>
+        </header>
+
+        <main class="history-list-area" id="history-list">
+            <!-- ここにデータが入ります -->
+        </main>
+
+        <footer class="form-footer">
+            <button id="back-to-top-from-table" class="blue-btn">⬅ 戻る</button>
+        </footer>
+    </div>
+
+    <!-- 4. グラフで見る画面 -->
+    <div class="app-container hidden" id="chart-screen">
+        <header class="screen-header">
+            <h2>分析レポート</h2>
+        </header>
+
+        <main class="chart-area">
+            <div class="chart-box">
+                <h3>教科別の勉強時間 (分)</h3>
+                <canvas id="timeChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>日程別の合計勉強時間 (分)</h3>
+                <canvas id="dateChart"></canvas>
+            </div>
+            <div class="chart-box">
+                <h3>メンタルの割合</h3>
+                <canvas id="emotionChart"></canvas>
+            </div>
+        </main>
+
+        <footer class="form-footer">
+            <button id="back-to-top-from-chart" class="blue-btn">⬅ 戻る</button>
+        </footer>
+    </div>
+
+    <!-- 記録方法ポップアップ -->
+    <div class="menu-overlay" id="menu-overlay">
+        <div class="action-sheet" id="action-sheet-record">
+            <div class="menu-title">記録する方法を選択</div>
+            <button class="action-item" id="go-to-manual"><span>✏️</span> 時間を記録する</button>
+            <button class="action-item" disabled style="opacity:0.5;"><span>⏱️</span> カウントアップ</button>
+            <button class="action-item" disabled style="opacity:0.5;"><span>⏳</span> カウントダウン</button>
+            <button class="action-item cancel" id="cancel-action"><span>❌</span> キャンセル</button>
+        </div>
+    </div>
+
+    <!-- 記録を見るポップアップ -->
+    <div class="menu-overlay" id="view-menu-overlay">
+        <div class="action-sheet">
+            <div class="menu-title">記録を見る方法を選択</div>
+            <button class="action-item" id="go-to-table"><span>📊</span> 表で見る</button>
+            <button class="action-item" id="go-to-chart"><span>📈</span> グラフで見る</button>
+            <button class="action-item cancel" id="cancel-view-action"><span>❌</span> キャンセル</button>
+        </div>
+    </div>
+
+    <!-- Firebaseの処理読み込み -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
+
+<div id="teacher-screen" class="container hidden">
+        <h1 class="teacher-title">乃亜先生の管理画面 👩‍🏫</h1>
+        
+        <div class="teacher-section comment-sender-box">
+            <h3>💬 生徒へリアルタイムコメントを送る</h3>
+            <div class="form-group">
+                <input type="text" id="target-student-name" placeholder="届ける生徒のニックネームを入力">
+                <textarea id="teacher-comment-input" rows="3" placeholder="ここにメッセージを入力（例：今日も4時間も勉強できて素晴らしいね！その調子！）"></textarea>
+                <button type="button"id="send-comment-btn" class="blue-btn" style="width: 100%; margin-top: 10px;">コメントを送信する 📬</button>
+            </div>
+        </div>
+
+        <div class="teacher-section">
+            <h3>🌤️ クラスのメンタル天気予報</h3>
+            <div id="mental-weather-status" class="weather-box">集計中...</div>
+        </div>
+
+        <div class="teacher-section">
+            <h3>🚨 サイレントSOS（しんどいサイン連続）</h3>
+            <div id="silent-sos-list">集計中...</div>
+        </div>
+
+        <div class="teacher-section">
+            <h3>📋 全生徒のリアルタイム学習ログ</h3>
+            <div id="all-students-log" class="history-container">
+                </div>
+        </div>
+
+        <button id="teacher-logout-btn" class="logout-link">ログアウト</button>
+    </div>
+
+</body>
+</html>
