@@ -6,7 +6,7 @@ import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, do
 // 1. 乃亜さんの設定（先生アドレス ＆ Firebaseの鍵）
 // ==========================================
 const ADMIN_EMAIL = "noa.wtnb.1201@icloud.com";
-
+const memoInput = document.getElementById('memo-input');
 const firebaseConfig = {
     apiKey: "AIzaSyCij2zalqj7-0REbUqtwN_5L0H6AyF3R4Q",
     authDomain: "study-and-mental.firebaseapp.com",
@@ -258,16 +258,20 @@ saveRecordBtn.addEventListener('click', async () => {
         currentName = userHeaderStr.replace(" さんの記録", "");
     }
 
-    const newRecord = {
-        userId: currentUser.uid,
-        username: currentName, 
-        subject: subject,
-        date: datePicker.value,
-        time: timePicker.value,
-        duration: (hours * 60) + minutes, 
-        emotion: selectedEmotion,
-        createdAt: new Date().getTime()
-    };
+   // newRecord の中に以下を追加
+const newRecord = {
+    userId: currentUser.uid,
+    username: currentName, 
+    subject: subject,
+    date: datePicker.value,
+    time: timePicker.value,
+    duration: (hours * 60) + minutes, 
+    emotion: selectedEmotion,
+    memo: memoInput ? memoInput.value.trim() : "", // 👈 ここを追加！
+    createdAt: new Date().getTime()
+};
+// resetForm() または保存成功時の処理の中に以下を追加してメモ欄を空にする
+if (memoInput) memoInput.value = "";
 
     try {
         await addDoc(collection(db, "studyRecords"), newRecord);
@@ -290,15 +294,18 @@ function renderHistoryTable() {
         const h = Math.floor(record.duration / 60); const m = record.duration % 60;
         const durationText = h > 0 ? `${h}時間 ${m}分` : `${m}分`;
         item.innerHTML = `
-            <div class="history-info">
-                <div class="item-subject">${record.subject}</div>
-                <div class="item-time-date">${record.date} / ${durationText}</div>
-            </div>
-            <div class="history-right">
-                <div class="item-emotion">${emotionIcons[record.emotion] || "🙂"}</div>
-                <button class="delete-item-btn" data-id="${record.id}">削除</button>
-            </div>
-        `;
+    <div class="history-info">
+        <div class="item-subject">${record.subject}</div>
+        <div class="item-time-date">${record.date} / ${durationText}</div>
+        <!-- 👇 ここを追加！メモがあれば表示する -->
+        ${record.memo ? `<div class="item-memo" style="font-size: 13px; color: #666; margin-top: 4px; background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">📝 ${record.memo}</div>` : ''}
+    </div>
+    <div class="history-right">
+        <div class="item-emotion">${emotionIcons[record.emotion] || "🙂"}</div>
+        <button class="delete-item-btn" data-id="${record.id}">削除</button>
+    </div>
+`;
+    
         historyList.appendChild(item);
     });
 
@@ -432,14 +439,16 @@ async function loadTeacherDashboard() {
                 const h = Math.floor(data.duration / 60); const m = data.duration % 60;
                 const durationText = h > 0 ? `${h}時間 ${m}分` : `${m}分`;
                 logItem.innerHTML = `
-                    <div class="history-info">
-                        <div class="item-subject">👤 ${data.username || "不明"} - ${data.subject}</div>
-                        <div class="item-time-date">${data.date} / ${durationText}</div>
-                    </div>
-                    <div class="history-right">
-                        <div class="item-emotion">${emotionIcons[data.emotion] || "🙂"}</div>
-                    </div>
-                `;
+    <div class="history-info">
+        <div class="item-subject">👤 ${data.username || "不明"} - ${data.subject}</div>
+        <div class="item-time-date">${data.date} / ${durationText}</div>
+        <!-- 👇 ここを追加！先生側にもメモを表示 -->
+        ${data.memo ? `<div class="item-memo" style="font-size: 13px; color: #555; margin-top: 4px; background: #e8f0fe; padding: 4px 8px; border-radius: 4px;">📝 内容: ${data.memo}</div>` : ''}
+    </div>
+    <div class="history-right">
+        <div class="item-emotion">${emotionIcons[data.emotion] || "🙂"}</div>
+    </div>
+`;
                 allLogsArea.appendChild(logItem);
             });
         }
