@@ -1,533 +1,373 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, where, orderBy, onSnapshot, doc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background-color: #fcdca2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
 
-// ==========================================
-// 1. 乃亜さんの設定（先生アドレス ＆ Firebaseの鍵）
-// ==========================================
-const ADMIN_EMAIL = "noa.wtnb.1201@icloud.com";
-const memoInput = document.getElementById('memo-input');
-const firebaseConfig = {
-    apiKey: "AIzaSyCij2zalqj7-0REbUqtwN_5L0H6AyF3R4Q",
-    authDomain: "study-and-mental.firebaseapp.com",
-    projectId: "study-and-mental",
-    storageBucket: "study-and-mental.firebasestorage.app",
-    messagingSenderId: "314890355741",
-    appId: "1:314890355741:web:8430ed678947a202cb32f4",
-    measurementId: "G-5FNEE9Q79K"
-};
+.app-container {
+    width: 100%;
+    max-width: 400px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 20px;
+    box-sizing: border-box;
+    text-align: center;
+}
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+.hidden {
+    display: none !important;
+}
 
-// ==========================================
-// 2. 画面要素の取得
-// ==========================================
-const authScreen = document.getElementById('auth-screen');
-const authUsername = document.getElementById('auth-username');
-const authEmail = document.getElementById('auth-email');
-const authPassword = document.getElementById('auth-password');
-const loginBtn = document.getElementById('login-btn');
-const signupBtn = document.getElementById('signup-btn');
+/* ログイン画面用フォーム */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-top: 40px;
+    margin-bottom: auto;
+}
 
-const topScreen = document.getElementById('top-screen');
-const recordScreen = document.getElementById('record-screen');
-const tableScreen = document.getElementById('table-screen');
-const chartScreen = document.getElementById('chart-screen');
-const teacherScreen = document.getElementById('teacher-screen'); 
+.auth-form input {
+    width: 100%;
+    padding: 15px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
 
-const recordButton = document.getElementById('record-button');
-const viewTableButton = document.getElementById('view-table-button');
-const logoutBtn = document.getElementById('logout-btn');
-const teacherLogoutBtn = document.getElementById('teacher-logout-btn'); 
-const userDisplayName = document.getElementById('user-display-name');
+.secondary-btn {
+    background-color: #e5e5ea !important;
+    color: #333 !important;
+    margin-top: 10px;
+}
 
-const menuOverlay = document.getElementById('menu-overlay');
-const viewMenuOverlay = document.getElementById('view-menu-overlay');
-const cancelAction = document.getElementById('cancel-action');
-const cancelViewAction = document.getElementById('cancel-view-action');
+.logout-link {
+    background: none;
+    border: none;
+    color: #ff3b30;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 5px;
+}
 
-const goToManual = document.getElementById('go-to-manual');
-const goToTable = document.getElementById('go-to-table');
-const goToChart = document.getElementById('go-to-chart');
+/* タイトル部分 */
+.app-header h1 { font-size: 36px; font-weight: bold; margin: 0; color: #000; }
+.app-header h2 { font-size: 24px; font-weight: bold; margin: 10px 0 0 0; color: #444; }
+.screen-header h2 { font-size: 28px; font-weight: bold; margin: 0 0 10px 0; color: #000; }
 
-const backToTopFromRecord = document.getElementById('back-to-top-from-record');
-const backToTopFromTable = document.getElementById('back-to-top-from-table');
-const backToTopFromChart = document.getElementById('back-to-top-from-chart');
+/* メインボタンエリア（重複を消してきれいに修正！） */
+.button-area { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 40px; 
+    width: 100%; 
+    margin-top: auto;
+    margin-bottom: auto;
+}
 
-const emotionButtons = document.querySelectorAll('.emotion-btn');
-const saveRecordBtn = document.getElementById('save-record-btn');
-const subjectInput = document.getElementById('subject-input');
-const addSubjectBtn = document.getElementById('add-subject-btn');
-const subjectSelect = document.getElementById('subject-select');
+.menu-button {
+    width: 100%;
+    background-color: #ffffff; color: #000000; border: none; padding: 25px;
+    font-size: 18px; font-weight: bold; border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer;
+    box-sizing: border-box;
+}
 
-const datePicker = document.getElementById('date-picker');
-const timePicker = document.getElementById('time-picker');
-const hoursInput = document.getElementById('hours-input');
-const minutesInput = document.getElementById('minutes-input');
-const historyList = document.getElementById('history-list');
+.comment-button {
+    background-color: #e5c38c; color: #ffffff; border: none;
+    padding: 15px 30px; font-size: 16px; border-radius: 8px; width: 80%; cursor: not-allowed;
+}
 
-let currentUser = null;
-let currentRecords = []; 
-let selectedEmotion = "";
+/* フォーム用 */
+.record-form { text-align: left; width: 100%; }
+.form-group { margin-bottom: 25px; }
+.section-title { font-size: 22px; font-weight: bold; display: block; margin-bottom: 8px; }
+.text-green { color: #8bbb11; }
+.text-yellow { color: #ccaa00; }
 
-let timeChartInstance = null;
-let dateChartInstance = null;
-let emotionChartInstance = null;
+.input-inline { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.input-inline input { flex: 1; padding: 8px; font-size: 16px; border: 1px solid #ccc; border-radius: 4px; }
+.crud-buttons { display: flex; gap: 5px; }
+.pink-btn { background-color: #f7c2eb; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
 
-// ==========================================
-// 3. ログイン認証 ＆ 先生・生徒の画面切り替え
-// ==========================================
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        currentUser = user;
-        
-        if (user.email === ADMIN_EMAIL) {
-            authScreen.classList.add('hidden');
-            topScreen.classList.add('hidden');
-            teacherScreen.classList.remove('hidden'); 
-            loadTeacherDashboard(); 
-        } else {
-            const qUser = query(collection(db, "users"), where("userId", "==", user.uid));
-            onSnapshot(qUser, (snapshot) => {
-                let name = user.email.split('@')[0];
-                snapshot.forEach((doc) => {
-                    name = doc.data().username;
-                });
-                userDisplayName.textContent = `${name} さんの記録`;
-                
-                // 生徒の名前が決まったら、コメントのリアルタイム受信を開始！
-                listenToTeacherComments(name);
-            });
+.ios-picker { width: 100%; padding: 12px; font-size: 18px; background-color: #fff; border: 1px solid #ddd; border-radius: 8px; }
+.datetime-picker-row { display: flex; gap: 10px; }
+.datetime-picker-row input { flex: 1; padding: 10px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
 
-            authScreen.classList.add('hidden');
-            teacherScreen.classList.add('hidden');
-            topScreen.classList.remove('hidden'); 
-            listenToRecords();
-        }
-    } else {
-        currentUser = null;
-        topScreen.classList.add('hidden');
-        recordScreen.classList.add('hidden');
-        tableScreen.classList.add('hidden');
-        chartScreen.classList.add('hidden');
-        teacherScreen.classList.add('hidden');
-        authScreen.classList.remove('hidden'); 
-    }
-});
+.duration-picker { display: flex; align-items: center; justify-content: center; gap: 10px; background-color: #fff; padding: 15px; border-radius: 10px; }
+.duration-picker input { width: 60px; font-size: 20px; text-align: center; padding: 5px; border: none; border-bottom: 2px solid #ccc; }
+.duration-picker span { font-size: 18px; font-weight: bold; }
 
-// 新規アカウント作成（ニックネーム重複チェック付き！）
-signupBtn.addEventListener('click', async () => {
-    const username = authUsername.value.trim();
-    const email = authEmail.value.trim();
-    const password = authPassword.value;
+.emotion-container { display: flex; justify-content: space-between; margin-top: 10px; }
+.emotion-btn { background: none; border: 3px solid transparent; font-size: 45px; cursor: pointer; border-radius: 50%; width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; }
+.emotion-btn.selected { border-color: #007aff; transform: scale(1.1); }
+
+.form-footer { display: flex; justify-content: space-between; width: 100%; margin-top: 10px; }
+.blue-btn { background-color: #007aff; color: white; border: none; padding: 12px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; }
+.disabled-btn { background-color: #e5e5ea; color: #aeaeb2; border: none; padding: 12px 25px; font-size: 16px; border-radius: 8px; cursor: not-allowed; }
+.active-save-btn { background-color: #34c759 !important; color: white !important; cursor: pointer !important; }
+
+/* 履歴・グラフ共通エリア */
+.history-list-area, .chart-area {
+    flex: 1;
+    overflow-y: auto;
+    width: 100%;
+    padding-right: 5px;
+    text-align: left;
+}
+
+.empty-message { color: #666; font-size: 16px; text-align: center; margin-top: 50px; }
+.history-item { background-color: #ffffff; border-radius: 10px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.history-info .item-subject { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+.history-info .item-time-date { font-size: 13px; color: #666; }
+.history-right { display: flex; align-items: center; gap: 15px; }
+.history-right .item-emotion { font-size: 32px; }
+.delete-item-btn { background-color: #ff3b30; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+
+/* グラフ用のスタイル */
+.chart-box {
+    background-color: #ffffff;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.chart-box h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #333;
+    text-align: center;
+}
+
+/* ポップアップメニュー */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.98); /* 背景 */
     
-    if(!email || !password || (email !== ADMIN_EMAIL && !username)) { 
-        alert("正しく入力してください！"); 
-        return; 
-    }
+    /* 👇 ここを追加！中身がはみ出したら縦スクロールできるようにします */
+    overflow-y: auto; 
     
-    try {
-        // --------------------------------------------------
-        // 【追加】生徒のアカウントの場合のみ、ニックネームの重複チェックを行う
-        // --------------------------------------------------
-        if (email !== ADMIN_EMAIL) {
-            // データベースから、入力されたusernameと同じものを探すクエリ
-            const nameCheckQuery = query(collection(db, "users"), where("username", "==", username));
-            const querySnapshot = await getDocs(nameCheckQuery);
-            
-            // もし1件でも見つかったら、そこで処理を中断して警告する
-            if (!querySnapshot.empty) {
-                alert(`「${username}」はすでに他の人が使用しています。別のニックネーム（例: ${username}2 や、後ろに数字をつけるなど）にしてください！`);
-                return; // ここで終了し、Firebase Authのアカウント作成まで進ませない
-            }
-        }
-        // --------------------------------------------------
-
-        // 重複がなければ、通常通りアカウントを作成する
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        
-        if (email !== ADMIN_EMAIL) {
-            await addDoc(collection(db, "users"), {
-                userId: user.uid,
-                username: username
-            });
-        }
-        
-        alert("アカウントを作成しました！");
-        authUsername.value = "";
-    } catch (err) {
-        alert("エラー: " + err.message);
-    }
-});
-// ログイン
-loginBtn.addEventListener('click', () => {
-    const email = authEmail.value.trim();
-    const password = authPassword.value;
-    if(!email || !password) { alert("入力してください！"); return; }
-    signInWithEmailAndPassword(auth, email, password)
-        .catch(err => alert("ログイン失敗: " + err.message));
-});
-
-// ログアウト
-logoutBtn.addEventListener('click', () => signOut(auth).then(() => alert("ログアウトしました")));
-if(teacherLogoutBtn) {
-    teacherLogoutBtn.addEventListener('click', () => signOut(auth).then(() => alert("ログアウトしました")));
-}
-
-// ==========================================
-// 4. 生徒側の処理（リアルタイムデータ受信）
-// ==========================================
-function listenToRecords() {
-    if (!currentUser) return;
+    /* 👇 もし display: flex; が入っていたら、以下のように上詰めに変更すると確実です */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* center から flex-start に変更 */
+    padding-top: 60px; /* 上部に少し余白を作る */
+    padding-bottom: 60px; /* 下のキャンセルボタンの後ろにも余白を作る */
     
-    // ✨【バグ修正】エラーを起こす orderBy を外し、シンプルなクエリに変更！
-    const q = query(
-        collection(db, "studyRecords"),
-        where("userId", "==", currentUser.uid)
-    );
-
-    onSnapshot(q, (snapshot) => {
-        currentRecords = [];
-        snapshot.forEach((doc) => {
-            currentRecords.push({ id: doc.id, ...doc.data() });
-        });
-        
-        // ✨【追加】アプリ側（JS）で新しい順にソートしてあげることで、エラーを出さずに綺麗に並べ替えます！
-        currentRecords.sort((a, b) => b.createdAt - a.createdAt);
-        
-        if (!tableScreen.classList.contains('hidden')) renderHistoryTable();
-    });
+    box-sizing: border-box;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
 }
 
-// フォームの初期設定
-const now = new Date();
-if(datePicker) datePicker.value = now.toISOString().split('T')[0];
-if(timePicker) timePicker.value = now.toTimeString().slice(0, 5);
-
-recordButton.addEventListener('click', () => menuOverlay.classList.add('active'));
-viewTableButton.addEventListener('click', () => viewMenuOverlay.classList.add('active'));
-cancelAction.addEventListener('click', () => menuOverlay.classList.remove('active'));
-cancelViewAction.addEventListener('click', () => viewMenuOverlay.classList.remove('active'));
-
-goToManual.addEventListener('click', () => { menuOverlay.classList.remove('active'); topScreen.classList.add('hidden'); recordScreen.classList.remove('hidden'); });
-goToTable.addEventListener('click', () => { viewMenuOverlay.classList.remove('active'); topScreen.classList.add('hidden'); tableScreen.classList.remove('hidden'); renderHistoryTable(); });
-goToChart.addEventListener('click', () => { viewMenuOverlay.classList.remove('active'); topScreen.classList.add('hidden'); chartScreen.classList.remove('hidden'); renderCharts(); });
-
-function resetForm() {
-    selectedEmotion = "";
-    emotionButtons.forEach(btn => btn.classList.remove('selected'));
-    saveRecordBtn.disabled = true;
-    saveRecordBtn.className = 'disabled-btn';
-    subjectSelect.selectedIndex = 0;
+.menu-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+.action-sheet { width: 100%; max-width: 380px; background-color: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 14px 14px 0 0; padding: 10px 20px 30px 20px; box-sizing: border-box; transform: translateY(100%); transition: transform 0.3s ease; }
+.menu-overlay.active .action-sheet { transform: translateY(0); }
+.menu-title { font-size: 13px; color: #8e8e93; padding: 15px; text-align: center; border-bottom: 1px solid #d1d1d6; }
+.action-item { width: 100%; background: none; border: none; padding: 15px; font-size: 18px; color: #007fffff; text-align: center; cursor: pointer; border-bottom: 1px solid #d1d1d6; display: flex; justify-content: center; align-items: center; gap: 10px; }
+.action-item:last-child { border-bottom: none; }
+.action-item.cancel { color: #ff3b30; font-weight: bold; margin-top: 10px; }
+/* メニュー内にあるボタンの間隔を少し狭くする（例） */
+.menu-overlay button {
+    margin: 10px 0; /* 上下の隙間を少し狭める */
+    width: 80%;    /* スマホで押しやすい横幅に */
+    max-width: 300px;
 }
 
-backToTopFromRecord.addEventListener('click', () => { resetForm(); recordScreen.classList.add('hidden'); topScreen.classList.remove('hidden'); });
-backToTopFromTable.addEventListener('click', () => { tableScreen.classList.add('hidden'); topScreen.classList.remove('hidden'); });
-backToTopFromChart.addEventListener('click', () => { chartScreen.classList.add('hidden'); topScreen.classList.remove('hidden'); });
+/* ==========================================
+   追加：コメント機能用のデザイン
+   ========================================== */
 
-emotionButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        emotionButtons.forEach(btn => btn.classList.remove('selected'));
-        button.classList.add('selected');
-        selectedEmotion = button.getAttribute('data-emotion');
-        saveRecordBtn.disabled = false;
-        saveRecordBtn.className = 'blue-btn active-save-btn';
-    });
-});
-
-addSubjectBtn.addEventListener('click', () => {
-    const name = subjectInput.value.trim();
-    if (!name) return;
-    const opt = document.createElement('option');
-    opt.value = name; opt.textContent = name;
-    subjectSelect.appendChild(opt); subjectSelect.value = name; subjectInput.value = "";
-});
-
-saveRecordBtn.addEventListener('click', async () => {
-    const subject = subjectSelect.value;
-    if (!subject) { alert("教科を選択してください！"); return; }
-    const hours = parseInt(hoursInput.value) || 0;
-    const minutes = parseInt(minutesInput.value) || 0;
-
-    let currentName = currentUser.email.split('@')[0];
-    const userHeaderStr = userDisplayName.textContent;
-    if (userHeaderStr.includes(" さんの記録")) {
-        currentName = userHeaderStr.replace(" さんの記録", "");
-    }
-
-   // newRecord の中に以下を追加
-const newRecord = {
-    userId: currentUser.uid,
-    username: currentName, 
-    subject: subject,
-    date: datePicker.value,
-    time: timePicker.value,
-    duration: (hours * 60) + minutes, 
-    emotion: selectedEmotion,
-    memo: memoInput ? memoInput.value.trim() : "", // 👈 ここを追加！
-    createdAt: new Date().getTime()
-};
-// resetForm() または保存成功時の処理の中に以下を追加してメモ欄を空にする
-if (memoInput) memoInput.value = "";
-
-    try {
-        await addDoc(collection(db, "studyRecords"), newRecord);
-        alert("ネット上に保存しました！");
-        resetForm();
-        recordScreen.classList.add('hidden'); topScreen.classList.remove('hidden');
-    } catch (e) {
-        alert("保存エラー: " + e.message);
-    }
-});
-
-function renderHistoryTable() {
-    historyList.innerHTML = "";
-    if (currentRecords.length === 0) { historyList.innerHTML = '<div class="empty-message">記録がありません</div>'; return; }
-    const emotionIcons = { angry: "😡", sad: "😟", good: "🙂", happy: "😊" };
-
-    currentRecords.forEach((record) => {
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        const h = Math.floor(record.duration / 60); const m = record.duration % 60;
-        const durationText = h > 0 ? `${h}時間 ${m}分` : `${m}分`;
-        item.innerHTML = `
-    <div class="history-info">
-        <div class="item-subject">${record.subject}</div>
-        <div class="item-time-date">${record.date} / ${durationText}</div>
-        <!-- 👇 ここを追加！メモがあれば表示する -->
-        ${record.memo ? `<div class="item-memo" style="font-size: 13px; color: #666; margin-top: 4px; background: #f0f0f0; padding: 4px 8px; border-radius: 4px;">📝 ${record.memo}</div>` : ''}
-    </div>
-    <div class="history-right">
-        <div class="item-emotion">${emotionIcons[record.emotion] || "🙂"}</div>
-        <button class="delete-item-btn" data-id="${record.id}">削除</button>
-    </div>
-`;
-    
-        historyList.appendChild(item);
-    });
-
-    document.querySelectorAll('.delete-item-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const id = e.target.getAttribute('data-id');
-            if (confirm("この記録を削除しますか？")) {
-                await deleteDoc(doc(db, "studyRecords", id));
-            }
-        });
-    });
+/* 生徒側のコメント表示枠 */
+.comment-box {
+    background-color: #ffffff;
+    border-left: 5px solid #ffcc00;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 20px auto;
+    width: 85%;
+    max-width: 340px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    font-size: 14px;
+    line-height: 1.5;
+    color: #444;
+    text-align: left;
+    animation: popIn 0.3s ease-out;
 }
 
-function renderCharts() {
-    if (timeChartInstance) timeChartInstance.destroy();
-    if (dateChartInstance) dateChartInstance.destroy();
-    if (emotionChartInstance) emotionChartInstance.destroy();
-    if (currentRecords.length === 0) { alert("データがありません！"); return; }
-
-    const subjectData = {}; const dateData = {}; const emotionCounts = { happy: 0, good: 0, sad: 0, angry: 0 };
-    const sortedForChart = [...currentRecords].reverse();
-
-    sortedForChart.forEach(record => {
-        subjectData[record.subject] = (subjectData[record.subject] || 0) + record.duration;
-        dateData[record.date] = (dateData[record.date] || 0) + record.duration;
-        if (emotionCounts[record.emotion] !== undefined) { emotionCounts[record.emotion]++; }
-    });
-
-    const timeCtx = document.getElementById('timeChart').getContext('2d');
-    timeChartInstance = new Chart(timeCtx, { type: 'bar', data: { labels: Object.keys(subjectData), datasets: [{ label: '勉強時間 (分)', data: Object.values(subjectData), backgroundColor: '#007aff', borderRadius: 6 }] }, options: { responsive: true } });
-    const dateCtx = document.getElementById('dateChart').getContext('2d');
-    dateChartInstance = new Chart(dateCtx, { type: 'line', data: { labels: Object.keys(dateData), datasets: [{ label: 'その日の合計時間 (分)', data: Object.values(dateData), borderColor: '#34c759', backgroundColor: 'rgba(52, 199, 89, 0.1)', tension: 0.2, fill: true }] }, options: { responsive: true, scales: { y: { beginAtZero: true } } } });
-    const emotionCtx = document.getElementById('emotionChart').getContext('2d');
-    emotionChartInstance = new Chart(emotionCtx, { type: 'pie', data: { labels: ['😊 Happy', '🙂 Good', '😟 Sad', '😡 Angry'], datasets: [{ data: [emotionCounts.happy, emotionCounts.good, emotionCounts.sad, emotionCounts.angry], backgroundColor: ['#ffcc00', '#4cd964', '#5ac8fa', '#ff3b30'] }] }, options: { responsive: true } });
+/* 先生側のコメント送信エリア */
+.comment-sender-box {
+    background-color: #fff9db;
+    border: 2px solid #ffe066;
+    border-radius: 14px;
+    padding: 15px;
+    margin-bottom: 25px;
 }
 
-// ==========================================
-// 5. 先生側の管理画面ロジック ＆ コメント機能
-// ==========================================
-
-const sendCommentBtn = document.getElementById('send-comment-btn');
-if (sendCommentBtn) {
-    sendCommentBtn.addEventListener('click', async (e) => {
-        e.preventDefault(); 
-
-        let targetName = document.getElementById('target-student-name')?.value.trim();
-        const messageText = document.getElementById('teacher-comment-input')?.value.trim();
-        
-        if (!targetName || !messageText) {
-            alert("生徒のニックネームとメッセージを両方入力してください！");
-            return;
-        }
-
-        try {
-            await addDoc(collection(db, "teacherComments"), {
-                targetUsername: targetName,
-                message: messageText,
-                createdAt: new Date().getTime()
-            });
-
-            if(targetName === "Kさん" || targetName === "K") {
-                await addDoc(collection(db, "teacherComments"), {
-                    targetUsername: "test", 
-                    message: messageText,
-                    createdAt: new Date().getTime()
-                });
-            }
-
-            alert(`${targetName} さんへコメントを送信しました！`);
-            document.getElementById('teacher-comment-input').value = "";
-        } catch (error) {
-            alert("送信エラー: " + error.message);
-        }
-    });
+.comment-sender-box h3 {
+    margin-top: 0;
+    color: #f08c00;
+    font-size: 16px;
 }
 
-// ✨【バグ修正】クラッシュを引き起こしていた変数を消し、完璧に動くように修正しました！
-function listenToTeacherComments(studentName) {
-    // どんな名前のブレでも受け取れるように複数の候補で待ち受けます
-    const q = query(
-        collection(db, "teacherComments"), 
-        where("targetUsername", "in", [studentName, "Kさん", "test"])
-    );
-    
-    onSnapshot(q, (snapshot) => {
-        let latestMessage = "まだ先生からのメッセージはありません。";
-        let latestTime = 0;
-
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-            // 一番最新のコメントを特定する
-            if (data.createdAt && data.createdAt > latestTime) {
-                latestMessage = data.message;
-                latestTime = data.createdAt;
-            }
-        });
-        
-        const displayEl = document.getElementById('teacher-comment-display');
-        if (displayEl) {
-            displayEl.innerHTML = `📬 <strong>先生からのメッセージ:</strong><br>${latestMessage}`;
-        }
-    });
+.comment-sender-box input, 
+.comment-sender-box textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
 }
 
-async function loadTeacherDashboard() {
-    try {
-        const querySnapshot = await getDocs(collection(db, "studyRecords"));
-        let logs = [];
-        
-        querySnapshot.forEach((doc) => {
-            logs.push(doc.data());
-        });
-
-        logs.sort((a, b) => b.createdAt - a.createdAt);
-
-        calculateMentalWeather(logs);
-        detectSilentSOS(logs);
-
-        const allLogsArea = document.getElementById("all-students-log");
-        if(allLogsArea) {
-            allLogsArea.innerHTML = "";
-            if (logs.length === 0) {
-                allLogsArea.innerHTML = "<p class='empty-message'>まだ生徒のデータがありません。</p>";
-                return;
-            }
-
-            const emotionIcons = { angry: "😡", sad: "😟", good: "🙂", happy: "😊" };
-            logs.forEach(data => {
-                const logItem = document.createElement("div");
-                logItem.className = "history-item";
-                const h = Math.floor(data.duration / 60); const m = data.duration % 60;
-                const durationText = h > 0 ? `${h}時間 ${m}分` : `${m}分`;
-                logItem.innerHTML = `
-    <div class="history-info">
-        <div class="item-subject">👤 ${data.username || "不明"} - ${data.subject}</div>
-        <div class="item-time-date">${data.date} / ${durationText}</div>
-        <!-- 👇 ここを追加！先生側にもメモを表示 -->
-        ${data.memo ? `<div class="item-memo" style="font-size: 13px; color: #555; margin-top: 4px; background: #e8f0fe; padding: 4px 8px; border-radius: 4px;">📝 内容: ${data.memo}</div>` : ''}
-    </div>
-    <div class="history-right">
-        <div class="item-emotion">${emotionIcons[data.emotion] || "🙂"}</div>
-    </div>
-`;
-                allLogsArea.appendChild(logItem);
-            });
-        }
-    } catch (error) {
-        console.error("先生画面データの取得エラー:", error);
-    }
+.comment-sender-box textarea {
+    resize: none;
 }
 
-function calculateMentalWeather(logs) {
-    const weatherDisplay = document.getElementById("mental-weather-status");
-    if (!weatherDisplay) return;
-    if (logs.length === 0) { weatherDisplay.textContent = "データが足りません"; return; }
-
-    let happyCount = 0; let sadCount = 0;
-    logs.forEach(log => {
-        if (log.emotion === "happy" || log.emotion === "good") happyCount++;
-        if (log.emotion === "sad" || log.emotion === "angry") sadCount++;
-    });
-
-    const total = happyCount + sadCount;
-    if(total === 0) { weatherDisplay.textContent = "感情データがありません"; return; }
-    const happyRatio = (happyCount / total) * 100;
-
-    if (happyRatio >= 75) {
-        weatherDisplay.innerHTML = `☀️ <br> <strong>快晴 (ハッピー度: ${Math.round(happyRatio)}%)</strong><br><p style="font-size:14px; margin-top:5px; color:#666;">クラス全体が前向きに勉強に取り組めています！</p>`;
-    } else if (happyRatio >= 50) {
-        weatherDisplay.innerHTML = `⛅ <br> <strong>晴れのち曇り (ハッピー度: ${Math.round(happyRatio)}%)</strong><br><p style="font-size:14px; margin-top:5px; color:#666;">概ね順調ですが、少し疲れが見え始めているかも。</p>`;
-    } else {
-        weatherDisplay.innerHTML = `🌧️ <br> <strong style="color: #ff3b30;">大雨警報 (ハッピー度: ${Math.round(happyRatio)}%)</strong><br><p style="font-size:14px; margin-top:5px; color:#666;">イライラや不安が溜まっている生徒が多いようです。声かけのチャンス！</p>`;
-    }
+/* ふわっと表示されるアニメーション */
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
-function detectSilentSOS(logs) {
-    const sosListArea = document.getElementById("silent-sos-list");
-    if (!sosListArea) return;
-    sosListArea.innerHTML = "";
+/* ==========================================
+   追加：コメント機能用のデザイン
+   ========================================== */
 
-    const userHistory = {};
-    const sortedLogs = [...logs].sort((a, b) => a.createdAt - b.createdAt);
+/* 生徒側のコメント表示枠 */
+.comment-box {
+    background-color: #ffffff;
+    border-left: 5px solid #ffcc00;
+    border-radius: 12px;
+    padding: 15px;
+    margin: 20px auto;
+    width: 85%;
+    max-width: 340px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    font-size: 14px;
+    line-height: 1.5;
+    color: #444;
+    text-align: left;
+    animation: popIn 0.3s ease-out;
+}
 
-    sortedLogs.forEach(log => {
-        if (!log.username) return;
-        if (!userHistory[log.username]) { userHistory[log.username] = []; }
-        userHistory[log.username].push(log.emotion);
-    });
+/* 先生側のコメント送信エリア */
+.comment-sender-box {
+    background-color: #fff9db;
+    border: 2px solid #ffe066;
+    border-radius: 14px;
+    padding: 15px;
+    margin-bottom: 25px;
+}
 
-    let sosCount = 0;
+.comment-sender-box h3 {
+    margin-top: 0;
+    color: #f08c00;
+    font-size: 16px;
+}
 
-    for (const username in userHistory) {
-        const emotions = userHistory[username];
-        let consecutiveBadDays = 0;
-        let triggersSOS = false;
+.comment-sender-box input, 
+.comment-sender-box textarea {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
 
-        for (let i = 0; i < emotions.length; i++) {
-            if (emotions[i] === "sad" || emotions[i] === "angry") {
-                consecutiveBadDays++;
-                if (consecutiveBadDays >= 2) { triggersSOS = true; }
-            } else {
-                consecutiveBadDays = 0; 
-            }
-        }
+.comment-sender-box textarea {
+    resize: none;
+}
 
-        if (triggersSOS) {
-            sosCount++;
-            const alertTag = document.createElement("div");
-            alertTag.className = "history-item";
-            alertTag.style.borderLeft = "5px solid #ff3b30";
-            alertTag.style.marginBottom = "8px";
-            alertTag.innerHTML = `
-                <div class="history-info">
-                    <div class="item-subject" style="color:#ff3b30; font-weight:bold;">⚠️ 連続アラート</div>
-                    <div class="item-time-date"><strong>${username}</strong> さんの心に「しんどいサイン」が続いています。</div>
-                </div>
-            `;
-            sosListArea.appendChild(alertTag);
-        }
-    }
+/* ふわっと表示されるアニメーション */
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.95); }
+    100% { opacity: 1; transform: scale(1); }
+}
 
-    if (sosCount === 0) {
-        sosListArea.innerHTML = "<div class='empty-message'>✅ 現在、アラートが出ている生徒はいません。みんな順調そうです！</div>";
-    }
+/* ==========================================
+   入力画面（レコード画面）のレイアウト調整
+   ========================================== */
+
+/* 入力項目ごとのグループの隙間を少し広げてスッキリさせる */
+.input-group {
+    margin-bottom: 24px;
+    text-align: left;
+    width: 100%;
+    max-width: 400px; /* 画面が大きくなりすぎないようにストッパー */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* フォームのラベル（「教科」や「勉強内容」という文字） */
+.input-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+    padding-left: 4px;
+}
+
+/* 👇 ここで入力枠（セレクト、インプット、メモ欄）を広げています！ */
+.input-group select,
+.input-group input[type="text"],
+.input-group input[type="number"],
+.input-group input[type="date"],
+.input-group input[type="time"],
+#memo-input {
+    width: 100%;
+    padding: 14px 16px; /* 👈 内側の余白を広げて、枠自体をふっくらさせました */
+    font-size: 16px;     /* 👈 スマホでズームしすぎない＆押しやすい絶妙なサイズ */
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px; /* 👈 角を少し丸くして柔らかい印象に */
+    background-color: #f9f9f9;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    appearance: none;    /* ブラウザ特有の変なデザインをリセット */
+}
+
+/* 入力枠をクリック（フォーカス）したときのオシャレなエフェクト */
+.input-group select:focus,
+.input-group input:focus,
+#memo-input:focus {
+    outline: none;
+    border-color: #007aff; /* 👈 iOSっぽい綺麗なブルーに光る */
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1); /* ほんのり青い影 */
+}
+
+/* メモを入力するテキストエリア（textarea）の個別調整 */
+#memo-input {
+    height: 120px;       /* 👈 高さをしっかり確保して書きやすく */
+    resize: vertical;    /* ユーザーが縦方向にだけサイズを伸ばせるように */
+    font-family: inherit;/* 文字化け・フォントズレ防止 */
+}
+
+/* 時間と分を横並びにしている場合の調整（もしあれば） */
+.time-input-container {
+    display: flex;
+    gap: 12px;
+    align-items: center;
 }
